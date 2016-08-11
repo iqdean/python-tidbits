@@ -1,0 +1,17 @@
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ ls -al
+total 10252
+drwxrwxrwx 1 root root     4096 Jul 14 00:09 .
+drwxrwxrwx 1 root root     4096 Jul 12 19:22 ..
+-rwxrwxrwx 1 root root      670 Jul 13 23:46 3-cpwocp.sh
+-rwxrwxrwx 1 root root 10485760 Jul 14 00:06 src.img
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ ./3-cpwocp.sh src.img dst.img
+copying src.img dst.img
+Copy complete
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ ls -al
+total 20492
+drwxrwxrwx 1 root root     4096 Jul 14 00:09 .
+drwxrwxrwx 1 root root     4096 Jul 12 19:22 ..
+-rwxrwxrwx 1 root root      670 Jul 13 23:46 3-cpwocp.sh
+-rwxrwxrwx 1 root root 10485760 Jul 14 00:09 dst.img
+-rwxrwxrwx 1 root root 10485760 Jul 14 00:06 src.img
+

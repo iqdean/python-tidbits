@@ -1,0 +1,41 @@
+
+To run manually:
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/6$ ./diskmon.sh
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/6$ cat diskmon.log 
+Time: 20160715000327 Volume: /media/iqdean/Lexar  Used: 47% 
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/6$ ./diskmon.sh
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/6$ cat diskmon.log 
+Time: 20160715000327 Volume: /media/iqdean/Lexar  Used: 47% 
+Time: 20160715000346 Volume: /media/iqdean/Lexar  Used: 47% 
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/6$ ./diskmon.sh
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/6$ cat diskmon.log 
+Time: 20160715000327 Volume: /media/iqdean/Lexar  Used: 47% 
+Time: 20160715000346 Volume: /media/iqdean/Lexar  Used: 47% 
+Time: 20160715000354 Volume: /media/iqdean/Lexar  Used: 47% 
+
+To run periodically, add diskmon.sh to your crobtab:
+
+$ crontab -e
+
+# to run every minute
+* * * * * ~/diskmon.sh
+
+To confirm its running
+
+wait a few minutes & verify there's a log entry
+at the rate you specd in your crontab
+
+iqdean@hpdm4:~$ cat diskmon.log
+Time: 20160715000327 Volume: /media/iqdean/Lexar  Used: 47% 
+Time: 20160715000346 Volume: /media/iqdean/Lexar  Used: 47% 
+Time: 20160715000354 Volume: /media/iqdean/Lexar  Used: 47% 
+Time: 20160715002101 Volume: /media/iqdean/Lexar  Used: 47%   < 
+Time: 20160715002201 Volume: /media/iqdean/Lexar  Used: 47%   <
+
+TODO:
+Add heuristic's to parse diskmon.log to determine
+when the date 
+

@@ -1,0 +1,14 @@
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/1$ ./1-deltatime.py 
+
+REST API CALL to time.jsontest.com returned: 
+{
+   "time": "07:22:15 AM",
+   "milliseconds_since_epoch": 1468480935930,
+   "date": "07-14-2016"
+}
+
+Remote EPOCH:  1468480935
+Local  EPOCH:  1468480935
+DELTA TIME  :  0 
+
+

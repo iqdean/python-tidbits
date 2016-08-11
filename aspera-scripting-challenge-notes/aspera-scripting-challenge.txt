@@ -1,0 +1,104 @@
+1. 
+Write a script that makes a REST call to http://time.jsontest.com and uses the result to
+compare against the localhost’s time/date setting.  Script result should note the systems’
+discrepancy between the times in seconds.
+
+WTF is REST:
+
+A RESTful API is an application program interface (API) that uses HTTP requests to GET, PUT, POST and DELETE data. Representational state transfer (REST), which is used by browsers, can be thought of as the language of the Internet.
+
+To the extent that systems conform to the constraints of REST they can be called RESTful. RESTful systems typically, but not always, communicate over Hypertext Transfer Protocol (HTTP) with the same HTTP verbs (GET, POST, PUT, DELETE, etc.) that web browsers use to retrieve web pages and to send data to remote servers.[1] REST systems interface with external systems as web resources identified by Uniform Resource Identifiers (URIs), for example /people/tom, which can be operated upon using standard verbs such as GET /people/tom
+
+                                     Client \  typically a web browser
+				     side   /  but not always
+                                       |
+HTTP (GET, POST, PUT, DELETE, etc) + JSON messages = REST
+                                       |
+                                     server side
+				     application
+				       |
+				       DB
+
+UTC
+
+http://www.nhc.noaa.gov/aboututc.shtml
+
+Prior to 1972, this time was called Greenwich Mean Time (GMT) but is now referred to as Coordinated Universal Time or Universal Time Coordinated (UTC). It is a coordinated time scale, maintained by the Bureau International des Poids et Mesures (BIPM). It is also known as "Z time" or "Zulu Time".
+
+To obtain your local time here in the United States, you need to subtract a certain number of hours from UTC depending on how many time zones you are away from Greenwich (England). The table below shows the standard difference from UTC time to local time.
+
+The switch to daylight saving time does not affect UTC. It refers to time on the zero or Greenwich meridian, which is not adjusted to reflect changes either to or from Daylight Saving Time.
+
+However, you need to know what happens during daylight saving time in the United States. In short, the local time is advanced one hour during daylight saving time. As an example, the Eastern Time zone difference from UTC is -4 hours during daylight saving time rather than -5 hours as it is during standard time.
+
+
+http://time.jsontest.com/
+{
+   "time": "10:01:56 PM",
+   "milliseconds_since_epoch": 1468360916429,
+   "date": "07-12-2016"
+}
+
+iqdean@hpdm4:~$ date -u
+Tue Jul 12 22:01:58 UTC 2016
+
+
+{
+   "time": "10:09:16 PM",
+   "milliseconds_since_epoch": 1468361356126,
+   "date": "07-12-2016"
+}
+
+iqdean@hpdm4:~$ date +%s
+1468361354
+
+1468361356126
+1468361354
+
+
+iqdean@hpdm4:~$ date -u +"%r"
+10:25:04 PM					"time": "10:09:16 PM"
+
+iqdean@hpdm4:~$ date -u +"%m-%d-%Y"
+07-12-2016					"date": "07-12-2016"
+
+------- bkm -------
+
+
+1. assume time.jsontest.com is the reference clock and it's always correct
+
+
+Using python, we can parse json
+
+http://www.cyberciti.biz/faq/python-execute-unix-linux-command-examples/
+
+https://www.safaribooksonline.com/library/view/python-cookbook-3rd/9781449357337/ch06s02.html
+
+
+
+Here is how you turn a Python data structure into JSON:
+
+import json
+
+data = {
+   'name' : 'ACME',
+   'shares' : 100,
+   'price' : 542.23
+}
+
+json_str = json.dumps(data)
+Here is how you turn a JSON-encoded string back into a Python data structure:
+
+data = json.loads(json_str)
+
+If you are working with files instead of strings, you can alternatively use json.dump() and json.load() to encode and decode JSON data. For example:
+
+# Writing JSON data
+with open('data.json', 'w') as f:
+     json.dump(data, f)
+
+# Reading data back
+with open('data.json', 'r') as f:
+     data = json.load(f)
+
+==== 

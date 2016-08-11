@@ -1,0 +1,148 @@
+challenge 2 - parsing the log file
+
+
+The script will report:
+
+Total number of ascp  transfers;
+
+1 Listing of all transfers and their average rate in Mb/s;
+
+Transfer		Bytes Xfrd	Total uS		Mbs
+
+2 PID of transfer(s) with the longest duration;
+> sort by Total uS
+
+PID of the transfer(s) sending the most data;
+> sort by Bytes Xfrd
+
+PID of the transfer(s) with the fastest rate.
+> sort by Mbs
+
+
+$ grep 'FASP Session Statistics' aspera.log
+
+1 line for each session
+
+Jan 26 18:38:27 sldc1 ascp[1831]: LOG FASP Session Statistics [Receiver] id=97e6c8c0-9f52-4432-9b48-ecf3982e1bcc delay=81ms rex_delay=83ms ooo_delay=8ms solicited_rex=25.00% rcvd_rex=25.00% rcvd_dups=25.00% ave_xmit_rate 0.00Kbps effective=50.00% effective_rate=0.00Kbps (detail: good_blks 2 bl_total 4 bl_orig 1 bl_rex 1 dup_blks 1 dup_last_blks 1 drop_blks_xnf 1) (sndr ctl: sent 0 rcvd 0 lost 0 lost 0.00%) (rcvr ctl: sent 5 rcvd 5 lost 0 lost 0.00%) (rex  ctl: sent 1 rcvd 1 lost 0 lost 0.00%) (progress: tx_bytes 1679 file_bytes 1679 tx_time 326916) rex_xmit_blks 1  xmit_total 4 rex_xmit_pct 25.00%
+
+... both Receiver & Sender show up in the log ...
+
+Jan 31 15:01:30 sldc1 ascp[21117]: LOG FASP Session Statistics [Sender] id=189a55ce-ba5e-4190-b701-869df6ea40e2 delay=38ms rex_delay=95ms solicited_rex=75.03% unsolicited_rex=0.12% ave_xmit_rate 85.80Mbps effective=24.86% effective_rate=21.33Mbps (detail: good_blks 7615191 bl_total 30637364 bl_orig7650974 bl_rex 22986390 dup_last_blks 35783) (sndr ctl: sent 4133 rcvd 4131 lost 2 lost 0.05%) (rcvr ctl: sent 34449 rcvd 34447 lost 2 lost 0.01%) (rex  ctl: sent 725869 rcvd 230234 lost 495635 lost 68.28%) (progress: tx_bytes 10737418240 file_bytes 10737418240 tx_time 4142108462) (estimate transfer size: 10737418240 bytes)  sess->instru.num_rex_xfer_not_found 0 sess->instru.num_rex_abrtxfer_not_found 0
+
+     -pid-                        bytes xfrd                               time uSec			Avg Rate
+ascp[1831]   (progress: tx_bytes 1679        file_bytes 1679        tx_time 326916    )		ave_xmit_rate 0.00Kbps   prog t/f/e=1679/1679/326916
+prog t/f/e=                      1679                   1679                326916
+
+	1679 bytes x 8 bits/byte = 13432 bits / .326916 sec = 41087.007 bits/sec = 41 kbps = 0.041Mbps
+                                                                                /1000     /1000000
+
+import re
+import numpy as np
+
+mlog = open('aspera.log')
+
+arr = np.empty((0,3), dtype=int)
+
+for line in mlog:
+	line = line.rstrip()
+	mydata = []
+	if re.search('FASP Session Statistics', line) :
+		'''print line'''
+		mydata.append(int(re.findall('\[([0-9]*)\]', line)[0]))
+		mydata.append(int(re.findall(' tx_bytes ([0-9]*) ', line)[0]))
+		mydata.append(int(re.findall(' tx_time ([0-9]*)\)', line)[0]))
+		print mydata
+		''' compute the avg xfr rate in Mbs '''
+		bits = mydata[1]*8
+		uSec = mydata[2]
+		if (uSec > 0) :
+			Mbs = float(bits/uSec)
+		else :
+			Mbs = 0
+		print('Mbs : %5.2f' % Mbs) 
+		arr = np.append(arr, [mydata], axis=0)
+
+'''
+      [[        1721            0            0]
+'''
+print "        PID        Bytes Xfrd       Total uS"
+print arr
+
+==== above code gives ====
+
+[1831, 1679, 326916]
+Mbs :  0.00
+
+==== change above code to use all floats for the Mbs calc ====
+
+		''' compute the avg xfr rate in Mbs '''
+		bits = float(mydata[1]*8)
+		uSec = float(mydata[2])
+		if (uSec > 0) :
+			Mbs = float(bits/uSec)
+		else :
+			Mbs = 0
+		print('Mbs : %5.2f' % Mbs) 
+
+=== now it correlates to hand calc's ====
+
+[1831, 1679, 326916]
+Mbs :  0.04
+
+
+ascp[21117]  (progress: tx_bytes 10737418240 file_bytes 10737418240 tx_time 4142108462) 		ave_xmit_rate 85.80Mbps
+prog t/f/e=                      10737418240            10737418240         4135190543
+
+( (10737418240 * 8 ) /    (4135190543/1000000)) / 1000000 = 20.77Mbps
+   bytes        bits/byte      uS     sec/us      Mbps/sec
+
+=== before:
+
+[21117, 10737418240, 4142108462]
+Mbs : 20.00
+
+=== after :
+
+[21117, 10737418240, 4142108462]
+Mbs : 20.74
+
+
+
+$ grep 'FASP Session Statistics' aspera.log | grep 21117
+
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/2$ grep 'FASP Session Statistics' aspera.log | grep 21117
+Jan 31 15:01:30 sldc1 ascp[21117]: LOG FASP Session Statistics [Sender] id=189a55ce-ba5e-4190-b701-869df6ea40e2 delay=38ms rex_delay=95ms solicited_rex=75.03% unsolicited_rex=0.12% ave_xmit_rate 85.80Mbps effective=24.86% effective_rate=21.33Mbps (detail: good_blks 7615191 bl_total 30637364 bl_orig7650974 bl_rex 22986390 dup_last_blks 35783) (sndr ctl: sent 4133 rcvd 4131 lost 2 lost 0.05%) (rcvr ctl: sent 34449 rcvd 34447 lost 2 lost 0.01%) (rex  ctl: sent 725869 rcvd 230234 lost 495635 lost 68.28%) (progress: tx_bytes 10737418240 file_bytes 10737418240 tx_time 4142108462) (estimate transfer size: 10737418240 bytes)  sess->instru.num_rex_xfer_not_found 0 sess->instru.num_rex_abrtxfer_not_found 0
+
+      pid
+ascp[21117]    (progress: tx_bytes 10737418240 file_bytes 10737418240 tx_time 4142108462) 
+                                       t                       f                  e 
+
+❏ t  (running total of bytes received) == 14604216
+❏ f  (running total of file bytes received) == 14604216
+❏ e  (total elapsed time [microseconds]) == 60189366
+
+$ grep 'prog t' aspera.log 
+
+Jan 31 15:01:24 sldc1 ascp[21117]: LOG Sender bl t/o/r/dl=30637364/7650974/22986390/35783 ctl bm/bs=0/0 rex b/r/n=22986390/230234/0 r_ott q/s/n=1/0/27083 rate t/m/c=400000000/0/400000000 prog t/f/e=10737418240/10737418240/4135190543 xmtD=1
+Jan 31 15:01:30 sldc1 ascp[21117]: LOG Sender bl t/o/r/dl=30637364/7650974/22986390/35783 ctl bm/bs=0/0 rex b/r/n=22986390/230234/0 r_ott q/s/n=1/0/27144 rate t/m/c=400000000/0/400000000 prog t/f/e=10737418240/10737418240/4141205765 xmtD=1
+Jan 31 15:01:30 sldc1 ascp[21117]: LOG Sender bl t/o/r/dl=30637364/7650974/22986390/35783 ctl bm/bs=0/0 rex b/r/n=22986390/230234/0 r_ott q/s/n=1/0/27144 rate t/m/c=400000000/0/400000000 prog t/f/e=10737418240/10737418240/4141205765 xmtD=1
+Jan 31 17:22:37 sldc1 ascp[21558]: LOG Sender bl t/o/r/dl=0/0/0/0 ctl bm/bs=0/0 rex b/r/n=0/0/0 r_ott q/s/n=0/0/0 rate t/m/c=2000000000/0/2000000 prog t/f/e=0/0/0 xmtD=0
+Jan 31 17:22:38 sldc1 ascp[21558]: LOG Sender bl t/o/r/dl=4/4/0/3 ctl bm/bs=0/0 rex b/r/n=0/0/0 r_ott q/s/n=0/0/3 rate t/m/c=2000000000/0/659000000 prog t/f/e=0/0/0 xmtD=1
+Jan 31 17:22:38 sldc1 ascp[21558]: LOG Sender bl t/o/r/dl=4/4/0/3 ctl bm/bs=0/0 rex b/r/n=0/0/0 r_ott q/s/n=0/0/3 rate t/m/c=2000000000/0/659000000 prog t/f/e=0/0/0 xmtD=1
+
+ascp[21117]  prog t/f/e=10737418240/10737418240/4135190543
+                             t           f          e
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/2$ grep 'prog t' aspera.log | grep 1831
+Jan 26 18:38:27 sldc1 ascp[1831]: LOG Receiver bl t/o/r/d/ts=4/1/1/2/0 rex_rtt l/h/s/o=77/0/74/83 ooo_rtt l/h/s/o=0/0/74/8 rate_rtt b/l/h/s/r/f=74/75/75/74/0/2 ctl bm/bs=0/0 rex n/s/q/v/a/r=0/1/1/0/0/0 bl l/d/o/r/a/x/dl/df/dm/ds=1/1/0/0/0/1/1/0/0/0 disk l/h/b=0/1/0 vlink lq/lo/rq/ro=0/0/0/0 rate t/m/c/n/vl/vr/r=10000000/0/2134000/2134000/10000000/10000000/10000000 prog t/f/e=1679/1679/326916 rcvD=1
+
+ascp[1831]	prog t/f/e=1679/1679/326916
+
+There's only 1 Reveiver and the rest are [Sender]
+=================================================
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/2$ grep 'LOG FASP Session Statistics \[Receiver\]' aspera.log
+Jan 26 18:38:27 sldc1 ascp[1831]: LOG FASP Session Statistics [Receiver] id=97e6c8c0-9f52-4432-9b48-ecf3982e1bcc delay=81ms rex_delay=83ms ooo_delay=8ms solicited_rex=25.00% rcvd_rex=25.00% rcvd_dups=25.00% ave_xmit_rate 0.00Kbps effective=50.00% effective_rate=0.00Kbps (detail: good_blks 2 bl_total 4 bl_orig 1 bl_rex 1 dup_blks 1 dup_last_blks 1 drop_blks_xnf 1) (sndr ctl: sent 0 rcvd 0 lost 0 lost 0.00%) (rcvr ctl: sent 5 rcvd 5 lost 0 lost 0.00%) (rex  ctl: sent 1 rcvd 1 lost 0 lost 0.00%) (progress: tx_bytes 1679 file_bytes 1679 tx_time 326916) rex_xmit_blks 1  xmit_total 4 rex_xmit_pct 25.00%
+
+

@@ -1,0 +1,115 @@
+Accepted scripting languages
+are bash/ksh, perl, ruby, and/or python for questions 1 and 2, 4, 5, and 6.  
+
+Question 3 needs to be in bash/ksh.
+------------------------------------
+
+Write a script that can copy a file, without using cp .  The script will take two command
+line parameters: source file and destination file. Describe the performance implications of
+the approach that you took and compare it to other methods of copying a file.
+
+3-cpwocp.py src_file dst_file
+
+1 === python command line args ====
+
+#!/usr/bin/python
+
+import sys
+
+print 'Number of arguments:', len(sys.argv), 'arguments.'
+print 'Argument List:', str(sys.argv)
+
+Now run above script as follows −
+
+$ python test.py arg1 arg2 arg3
+This produce following result −
+
+Number of arguments: 4 arguments.
+Argument List: ['test.py', 'arg1', 'arg2', 'arg3']
+
+
+2 === copy with rsync ===
+
+$ rsync options source destination
+
+
+Some advantages and features of Rsync command
+
+It efficiently copies and sync files to or from a remote system.
+Supports copying links, devices, owners, groups and permissions.
+It’s faster than scp (Secure Copy) because rsync uses remote-update protocol which allows to transfer just the differences between two sets of files. First time, it copies the whole content of a file or a directory from source to destination but from next time, it copies only the changed blocks and bytes to the destination.
+Rsync consumes less bandwidth as it uses compression and decompression method while sending and receiving data both ends.
+
+
+http://www.linuxquestions.org/questions/linux-server-73/which-is-better-cp-or-rsync-for-local-syncing-coping-847854/
+
+http://www.tecmint.com/rsync-local-remote-file-synchronization-commands/
+
+=== create a 10MB test1.img file to play with ===
+
+=== try to copy it with rsync ===
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/mynotes/3$ ls -al
+total 10240
+drwxrwxrwx 1 root root      152 Jul 12 20:51 .
+drwxrwxrwx 1 root root      224 Jul 12 20:17 ..
+-rwxrwxrwx 1 root root 10485760 Jul 12 20:51 test1.img
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/mynotes/3
+$ rsync ./test1.img ./test2.img
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/mynotes/3$ ls -al
+total 20480
+drwxrwxrwx 1 root root      256 Jul 12 20:59 .
+drwxrwxrwx 1 root root      224 Jul 12 20:17 ..
+-rwxrwxrwx 1 root root 10485760 Jul 12 20:51 test1.img
+-rwxrwxrwx 1 root root 10485760 Jul 12 20:59 test2.img
+
+3 === create filename based on time & date ===
+
+import time
+timestr = time.strftime("%Y%m%d-%H%M%S")
+print timestr
+
+
+3 === pull it all togeather into a script ====
+
+
+dd if=/dev/urandom of=test1024.img bs=1M count=1024
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ time rsync test1024.img test1024a.img
+
+real	0m11.486s
+user	0m6.200s
+sys	0m2.028s
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ time cp test1024.img test1024b.img
+
+real	0m7.469s
+user	0m0.008s
+sys	0m1.568s
+
+hmm, rsync is slower than plain cp in this case
+... try a bigger file size ...
+
+
+$ dd if=/dev/urandom of=test10240.img bs=1M count=10240
+10240+0 records out
+10737418240 bytes (11 GB) copied, 956.047 s, 11.2 MB/s
+
+-rwxrwxrwx 1 root root 10737418240 Jul 12 22:44 test10240.img
+-rwxrwxrwx 1 root root  1073741824 Jul 12 22:20 test1024.img
+-rwxrwxrwx 1 root root    10485760 Jul 12 22:00 test10.img
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ time rsync test10240.img test10240a.img
+
+real	5m4.335s
+user	1m10.768s
+sys	0m24.604s
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/3$ time cp test10240.img test10240b.img
+
+real	4m44.871s
+user	0m0.108s
+sys	0m19.092s
+

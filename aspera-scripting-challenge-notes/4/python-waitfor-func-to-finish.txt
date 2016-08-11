@@ -1,0 +1,221 @@
+http://stackoverflow.com/questions/2046603/is-it-possible-to-run-function-in-a-subprocess-without-threading-or-writing-a-se
+
+from multiprocessing import Process, Queue
+
+def my_function(q, x):
+    q.put(x + 100)
+
+if __name__ == '__main__':
+    queue = Queue()
+    p = Process(target=my_function, args=(queue, 1))
+    p.start()
+    p.join() # this blocks until the process terminates
+    result = queue.get()
+    print result
+
+=== multiprocess vs mulithread =====
+
+http://zulko.github.io/blog/2013/09/19/a-basic-example-of-threads-synchronization-in-python/
+
+Here I am using the module threading, and the two threads will be played in parrallel on the same processor. If you have a computer with several processors you can also use the multiprocessing module to have your threads played on two different processors (which can be MUCH faster). Nicely enough the two modules have the same syntax: simply replace threading by multiprocessing and Thread by Process in the example above and it should work.
+
+=== barriers ===
+http://stackoverflow.com/questions/6331301/implementing-an-n-process-barrier-using-semaphores
+
+=== python > launch a bunch of threads and wait for all of them to finish ====
+
+http://makina-corpus.com/blog/metier/2014/python-tutorial-understanding-python-threading
+
+list_threads = []
+
+for num_thread in range(1, 11):
+  #t = threading.Thread(target=BankAccount.execute_deposit, args=(my_account, 5000,'Customer %d' % (num_thread,)))
+  # This syntax will do the same job as the line just above
+  t = threading.Thread(target=my_account.execute_deposit, args=(5000,'Customer %d' % (num_thread,)))
+  list_threads.append(t)
+  t.start()
+
+print("All threads are started")
+
+for t in list_threads:
+  t.join() # Wait until thread terminates its task
+
+# Or write [t.join() for t in list_threads]
+
+print("All threads completed")
+
+---------
+
+OMG...it couldn't be any simpler... what a fucking pain in the ass ... 
+
+===== how to pass a string arg to a function run using python Thread =====
+
+http://stackoverflow.com/questions/3221655/python-threading-string-arguments
+
+You're trying to create a tuple, but you're just parenthesizing a string :)
+
+Add an extra ',':
+
+dRecieved = connFile.readline();
+processThread = threading.Thread(target=processLine, args=(dRecieved,)); # <- note extra ','
+processThread.start();
+Or use brackets to make a list:
+
+dRecieved = connFile.readline();
+processThread = threading.Thread(target=processLine, args=[dRecieved])); # <- 1 element list
+processThread.start();
+If you notice, from the stack trace: self.__target(*self.__args, **self.__kwargs)
+
+The *self.__args turns your string into a list of characters, passing them to the processLine function. If you pass it a one element list, it will pass that element as the first argument - in your case, the string.
+
+==== Example working code ====
+
+import sys
+import os
+import random
+import subprocess
+from threading import Thread
+
+def populate_dir(path):
+    print path
+
+def build_dir_tree(base, depth, width):
+    '''print("Call #%d" % depth)'''
+    if depth >= 0:
+        curr_depth = depth
+        depth -= 1
+        for i in xrange(width):
+            # first create the dir
+            os.makedirs('%s/D%d_L%d' % (base, i, curr_depth))
+            # then populate the dir
+            rp = '%s/D%d_L%d' % (base, i, curr_depth)
+            fp = os.path.abspath(rp)
+            #t = Thread(target=populate_dir, args=(fp))  < this bombs
+            t = Thread(target=populate_dir, args=(fp,))  # this works
+            t.start()
+ 
+        dirs = os.walk(base).next()[1]
+
+        for dir in dirs:
+            newbase = os.path.join(base,dir)
+            build_dir_tree(newbase, depth, width)
+    else:
+        return
+
+p = Thread(target=build_dir_tree, args=(base, depth, width))
+p.start()
+p.join()   # wait for build_dir_tree to finish
+
+
+''' 
+to see what we ended up with using $ tree
+'''
+
+p = subprocess.Popen(["tree", "./test"], stdout=subprocess.PIPE)
+output, err = p.communicate()
+print "*** dir tree  ***\n", output
+
+
+==== RESULTS IN:
+
+
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ ./4-gentestdata.py
+1. Building a directory tree of random depth & width ...
+base ./test  depth 1  width 4
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D0_L1
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D1_L1
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D2_L1
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D3_L1
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D0_L1/D0_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D0_L1/D1_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D0_L1/D2_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D0_L1/D3_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D1_L1/D0_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D1_L1/D1_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D1_L1/D2_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D1_L1/D3_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D2_L1/D0_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D2_L1/D1_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D2_L1/D2_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D2_L1/D3_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D3_L1/D0_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D3_L1/D1_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D3_L1/D2_L0
+/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4/test/D3_L1/D3_L0
+*** dir tree  ***
+./test
+├── D0_L1
+│   ├── D0_L0
+│   ├── D1_L0
+│   ├── D2_L0
+│   └── D3_L0
+├── D1_L1
+│   ├── D0_L0
+│   ├── D1_L0
+│   ├── D2_L0
+│   └── D3_L0
+├── D2_L1
+│   ├── D0_L0
+│   ├── D1_L0
+│   ├── D2_L0
+│   └── D3_L0
+└── D3_L1
+    ├── D0_L0
+    ├── D1_L0
+    ├── D2_L0
+    └── D3_L0
+
+20 directories, 0 files
+
+=== ok, now update populate_dir(path) with a file full of random data 
+    using dd 
+
+To create random size files between 1MB and 10MB in size:
+----------------------------------------------------------
+import random
+
+X = random.randint(1,10)
+cmd = 'dd if=/dev/urandom of=test1024.img bs=1M count=' + X
+
+Step 1:
+get dd to run using python subprocess
+
+start with a small file:
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ dd if=/dev/urandom of=small.img bs=512 count=1000
+1000+0 records in
+1000+0 records out
+512000 bytes (512 kB) copied, 0.162768 s, 3.1 MB/s
+
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ ls -altotal 525
+
+-rwxrwxrwx 1 root root 512000 Jul 15 10:30 small.img
+
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ 
+
+OK, now it basically works, but now we need to make the process doesn't termination
+before all the threads are finished.
+------------------------------------------------------------------------------------
+
+
+
+based on what i see now,
+the main code launches create_dir_tree() in thread2, which then recursively creates dir
+and inside thread2, create_dir_tree() is called multiple times
+
+the main code only p.joins on thread2, but that seems to work in terms of not exiting till
+all of thread2's recursive calls of create_dir_tree() have existed
+
+
+
+Try
+
+1. add 2 global lists to keep track of all the threads that get recursively launched
+   1 to keep track of all the threads running create_dir_tree()
+   1 to keep track of all the threads running create_file(path)
+ 
+2. have the main() flow join with all the threads in both lists
+
+
+
+
+

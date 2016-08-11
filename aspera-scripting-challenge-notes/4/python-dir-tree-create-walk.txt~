@@ -1,0 +1,151 @@
+=== python 2.7 os function list ===
+https://docs.python.org/2.7/library/os.html
+
+os.chdir(path)
+Change the current working directory to path.
+
+os.getcwd()
+Return a string representing the current working directory.
+
+os.listdir(path)
+Return a list containing the names of the entries in the directory given by path. The list is in arbitrary order. It does not include the special entries '.' and '..' even if they are present in the directory.
+
+os.mkdir(path[, mode])¶
+Create a directory named path with numeric mode mode. The default mode is 0777 (octal). If the directory already exists, OSError is raised.
+
+os.makedirs(path[, mode])
+Recursive directory creation function. Like mkdir(), but makes all intermediate-level directories needed to contain the leaf directory. Raises an error exception if the leaf directory already exists or cannot be created. The default mode is 0777 (octal)
+
+os.walk(top, topdown=True, onerror=None, followlinks=False)¶
+Generate the file names in a directory tree by walking the tree either top-down or bottom-up. For each directory in the tree rooted at directory top (including top itself), it yields a 3-tuple (dirpath, dirnames, filenames).
+
+
+These functions create new file objects. (See also open().)
+
+os.fdopen(fd[, mode[, bufsize]])
+Return an open file object connected to the file descriptor fd. The mode and bufsize arguments have the same meaning as the corresponding arguments to the built-in open() function. If fdopen() raises an exception, it leaves fd untouched (unclosed).
+
+
+To create random size files between 1MB and 10MB in size:
+----------------------------------------------------------
+import random
+
+X = random.randint(1,10)
+cmd = 'dd if=/dev/urandom of=test1024.img bs=1M count=' + X
+
+Shell scripting using python
+-----------------------------
+http://www.cyberciti.biz/faq/python-execute-unix-linux-command-examples/
+
+The os.system has many problems and subprocess is a much better way to executing unix command. The syntax is:
+
+import subprocess
+subprocess.call("command1")
+subprocess.call(["command1", "arg1", "arg2"])
+In this example, execute the date command:
+
+import subprocess
+subprocess.call("date")
+
+Another example (passing command line args):
+
+import subprocess
+p = subprocess.Popen(["ls", "-l", "/etc/resolv.conf"], stdout=subprocess.PIPE)
+output, err = p.communicate()
+print "*** Running ls -l command ***\n", output
+
+https://docs.python.org/2/library/subprocess.html
+-------------------------------------------------
+The subprocess module allows you to spawn new processes, connect to their input/output/error pipes, 
+and obtain their return codes. This module intends to replace several older modules and functions:
+
+os.system
+os.spawn*
+os.popen*
+popen2.*
+commands.*
+
+The recommended way to launch subprocesses is to use the following convenience functions. For more advanced use cases when these do not meet your needs, use the underlying Popen interface.
+
+subprocess.call(args, *, stdin=None, stdout=None, stderr=None, shell=False)
+Run the command described by args. Wait for command to complete, then return the returncode attribute.
+
+
+
+
+=== Python directory tree generator, using recursion
+https://gist.github.com/samuelsh/b837f8ab8b33c344f01128568dd12019
+
+#!/usr/bin/python2.6
+
+import sys
+import os
+
+def build_dir_tree(base, depth, width):
+    print("Call #%d" % depth)
+    if depth >= 0:
+        curr_depth = depth
+        depth -= 1
+        for i in xrange(width):
+                # first creating all folder at current depth
+                os.makedirs('%s/Dir_#%d_level_%d' % (base, i, curr_depth))
+		'''
+		os.makedirs() creates all intermediate-level dirs needed to 
+		contain the leaf directory
+		'''
+        dirs = os.walk(base).next()[1]
+        for dir in dirs:
+                newbase = os.path.join(base,dir)
+                build_dir_tree(newbase, depth, width)
+    else:
+        return
+
+if not sys.argv[1:]:
+        print('No base path given')
+        sys.exit(1)
+
+print('path: %s, depth: %d, width: %d' % (sys.argv[1], int(sys.argv[2]), int(sys.argv[3])))
+build_dir_tree(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
+
+
+$ ./4-gen-file-xfr-test-data.py ./test 1 2
+path: ./test, depth: 1, width: 2
+Call #1
+Call #0
+Call #-1
+Call #-1
+Call #0
+Call #-1
+Call #-1
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/4$ tree
+.
+├── 4-gen-file-xfr-test-data.py ./test 1 2
+		                   |   | \__ width  2       xrange(2) 0 1
+                                   |   \____ depth  1       0 1
+				    \_______ base   ./test
+
+                            base depth width
+└── test		    test
+    ├── Dir_#0_level_1		D0L1
+    │   ├── Dir_#0_level_0	   |--D0L0
+    │   └── Dir_#1_level_0         \--D1L0
+    └── Dir_#1_level_1	        D1L1
+        ├── Dir_#0_level_0         |--D0L0
+        └── Dir_#1_level_0         \--D1L0
+
+7 directories, 4 files
+
+
+http://pythoncentral.io/how-to-use-pythons-xrange-and-range/
+
+xrange vs range
+range returns a Python list object and xrange returns an xrange object
+
+xrange doesn't actually generate a static list at run-time like range does. It creates the values as you need them with a special technique called yielding. This technique is used with a type of object known as generators.
+
+if you have a really gigantic range you'd like to generate a list for, say one billion, xrange is the function to use. This is especially true if you have a really memory sensitive system such as a cell phone that you are working with, as range will use as much memory as it can to create your array of integers, which can result in a MemoryError and crash your program. It's a memory hungry beast.
+
+http://pythoncentral.io/python-generators-and-yield-keyword/
+
+At a glance, the yield statement is used to define generators, replacing the return of a function to provide a result to its caller without destroying local variables. Unlike a function, where on each call it starts with new set of variables, a generator will resume the execution where it was left off.
+

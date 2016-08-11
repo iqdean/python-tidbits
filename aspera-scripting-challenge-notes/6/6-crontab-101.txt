@@ -1,0 +1,183 @@
+
+
+Write a script that periodically executes.  This script will check disk space utilization of a
+defined volume/directory that is passed to it.  It will write to a configured file a log entry
+that indicates the expected date the storage will fill up based on the growth pattern of the
+storage.
+
+http://code.activestate.com/recipes/496800-event-scheduling-threadingtimer/
+
+http://code.activestate.com/recipes/114644/?_ga=1.225705822.557983689.1468375584
+
+https://docs.python.org/2.7/library/sched.html
+
+
+#!/bin/bash
+CURRENT=$(df / | grep / | awk '{ print $5}' | sed 's/%//g')
+THRESHOLD=90
+
+if [ "$CURRENT" -gt "$THRESHOLD" ] ; then
+    mail -s 'Disk Space Alert' mailid@domainname.com << EOF
+Your root partition remaining free space is critically low. Used: $CURRENT%
+EOF
+fi
+
+--------------------------------------------------------------
+
+#!/bin/bash
+CURRENT=$(df / | grep / | awk '{ print $5}' | sed 's/%//g')
+echo "Used: $CURRENT"
+
+-------------------------------------------------------------
+
+iqdean@hpdm4:~$ df
+Filesystem     1K-blocks      Used Available Use% Mounted on
+udev             3017624         4   3017620   1% /dev
+tmpfs             605736      1248    604488   1% /run
+/dev/sda3       14172856   6330636   7115612  48% /
+none                   4         0         4   0% /sys/fs/cgroup
+none                5120         0      5120   0% /run/lock
+none             3028672      9860   3018812   1% /run/shm
+none              102400        32    102368   1% /run/user
+/dev/sda2      610287612 174860888 435426724  29% /media/8C365D65365D5176
+/dev/sdb1       62519168  28894336  33624832  47% /media/iqdean/Lexar
+iqdean@hpdm4:~$ df / | grep / | awk '{ print $5}' | sed 's/%//g'
+48
+iqdean@hpdm4:~$ df /media/iqdean/Lexar | grep / | awk '{ print $5}' | sed 's/%//g'
+47
+
+----------------------------------------------------------
+
+If you want to run a command periodically, there's 2 ways :
+
+using the crontab command ex. * * * * * command (run every minutes)
+using a loop like : while true; do ./my_script.sh; sleep 60; done (not precise)
+
+-----------------------------------------------------------
+
+https://en.wikipedia.org/wiki/Cron
+
+Entry		Description														Equivalent to
+@yearly 	(or @annually)	Run once a year at midnight of January 1		0 0 1 1 *
+@monthly	Run once a month at midnight of the first day of the month		0 0 1 * *
+@weekly		Run once a week at midnight on Sunday morning					0 0 * * 0
+@daily		Run once a day at midnight										0 0 * * *
+@hourly		Run once an hour at the beginning of the hour					0 * * * *
+@reboot		Run at startup	@reboot
+
+Cron is driven by a crontab (cron table) file, a configuration file that specifies shell commands to run periodically on a given schedule. 
+
+The crontab files are stored where the lists of jobs and other instructions to the cron daemon are kept. 
+
+Users can have their own individual crontab files and often there is a system wide crontab file (usually in /etc or a subdirectory of /etc) that only system administrators can edit.
+
+---- ubuntu cron ----
+
+https://help.ubuntu.com/community/CronHowto
+
+Starting to Use Cron
+To use cron for tasks meant to run only for your user profile, add entries to your own user's crontab file. To edit the crontab file enter:
+
+crontab -e
+
+=== BKM on ubuntu 14.04 ====
+
+1. verify crontab is installed
+
+iqdean@hpdm4:~$ which crontab
+/usr/bin/crontab
+
+2. create test.sh, bash script to be run periodically using crontab
+
+iqdean@hpdm4:~$ cat test.sh
+
+#!/bin/bash
+cmd="date"
+res=$(eval $cmd)
+echo $res >> test.log
+
+2.1 create log file that the scipts going to wr to
+
+$ touch test.log
+
+TODO... update the script to avoid this step...
+
+FILE=$1
+if [ -f $FILE ]; then
+   echo "File '$FILE' Exists"
+else
+   echo "The File '$FILE' Does Not Exist"
+fi
+
+
+2.3 make the shell script executeable
+
+$ chmod +x test.sh
+
+3. add entry to crontab to run /home/iqdean/test.sh every minute
+
+$ crontab -e
+
+# run every minute                 < every minute is the fastest rate u can do w cron
+* * * * * /home/iqdean/test.sh     < add this line
+
+3.1 to check ur crontab file settings
+
+$ crontab -l                       < -l lists ur cronjobs
+
+4. to verify test.sh is running correctly
+
+iqdean@hpdm4:~$ cat test.log
+Thu Jul 14 22:29:24 PDT 2016
+Thu Jul 14 22:29:43 PDT 2016
+Thu Jul 14 22:29:58 PDT 2016
+Thu Jul 14 22:30:01 PDT 2016    < the every minute timestamps confirm
+Thu Jul 14 22:31:01 PDT 2016      crontab is running our test.sh script
+Thu Jul 14 22:32:01 PDT 2016      at the periodic rate we setup in our
+Thu Jul 14 22:33:01 PDT 2016      crontab config file
+Thu Jul 14 22:34:01 PDT 2016
+Thu Jul 14 22:35:01 PDT 2016
+Thu Jul 14 22:36:01 PDT 2016
+Thu Jul 14 22:37:01 PDT 2016
+Thu Jul 14 22:38:01 PDT 2016
+Thu Jul 14 22:39:01 PDT 2016
+Thu Jul 14 22:40:01 PDT 2016
+Thu Jul 14 22:41:01 PDT 2016
+Thu Jul 14 22:42:01 PDT 2016
+Thu Jul 14 22:43:01 PDT 2016
+Thu Jul 14 22:44:01 PDT 2016
+Thu Jul 14 22:45:01 PDT 2016
+Thu Jul 14 22:46:01 PDT 2016
+Thu Jul 14 22:47:01 PDT 2016
+Thu Jul 14 22:48:01 PDT 2016
+Thu Jul 14 22:49:01 PDT 2016
+Thu Jul 14 22:50:02 PDT 2016
+Thu Jul 14 22:51:01 PDT 2016
+iqdean@hpdm4:~$ 
+
+5. To unschedule the cronjob, use $ crontab -e and comment out the test.sh line
+
+iqdean@hpdm4:~$ cat test.log
+Thu Jul 14 22:29:24 PDT 2016
+Thu Jul 14 22:29:43 PDT 2016
+Thu Jul 14 22:29:58 PDT 2016
+...
+Thu Jul 14 23:00:01 PDT 2016
+Thu Jul 14 23:01:01 PDT 2016
+Thu Jul 14 23:02:01 PDT 2016
+
+iqdean@hpdm4:~$ date			< wait a few minutes
+Thu Jul 14 23:04:15 PDT 2016
+
+iqdean@hpdm4:~$ cat test.log
+Thu Jul 14 22:29:24 PDT 2016
+Thu Jul 14 22:29:43 PDT 2016
+...
+Thu Jul 14 23:01:01 PDT 2016
+Thu Jul 14 23:02:01 PDT 2016  	< 23:02:01 is last entry 
+iqdean@hpdm4:~$                   23:04    is current time, so test.sh isn't running anymore
+
+
+
+
+

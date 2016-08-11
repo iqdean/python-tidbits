@@ -1,0 +1,125 @@
+#!/usr/bin/python
+
+'''
+Title:		Aspera Scripting Challenge 4
+
+Description:
+Devise a method for creating temporary file data for use in testing file transfer.  The result
+of the script should be a directory that may have one or more nested directories (quantity
+randomly determined).  Inside these directories are a random number of files in each
+directory.  The files should be large (greater than 1MB) and mimic a collection of data.
+
+Please note rationale in the collection chosen, and how the files were generated.  What
+optimizations or considerations need to be made.
+
+Author:		ike dean iad1046@gmail.com 	
+
+Credits:
+The framework for this script is based on:
+
+Python directory tree generator, using recursion
+https://gist.github.com/samuelsh/b837f8ab8b33c344f01128568dd12019
+rdir.py - build_dir_tree(base, depth, width) 
+	
+'''
+
+import sys
+import os
+import random
+import subprocess
+from threading import Thread
+
+# globals
+
+dir_tree = []
+thread_list = []
+
+def create_file(path):
+    cmd_list = ['time','dd','if=/dev/urandom', 'of=test1.img', 'bs=512' ,'count=100']
+    cmd_list[3] = 'of=' + path + '/' + 'test1.img'
+    #print cmd_list[3]
+    print "Creating file in : ", path
+    a = subprocess.Popen(cmd_list, stderr=subprocess.PIPE)
+    a.communicate()
+
+def populate_dir(path):
+    #os.chdir(path)
+    #print os.getcwd()
+    #print path
+    create_file(path)
+
+def create_dir_tree(base, depth, width):
+    '''print("Call #%d" % depth)'''
+    if depth >= 0:
+        curr_depth = depth
+        depth -= 1
+        for i in xrange(width):
+            # first create the dir
+            os.makedirs('%s/D%d_L%d' % (base, i, curr_depth))
+            # then populate the dir
+            rp = '%s/D%d_L%d' % (base, i, curr_depth)
+            fp = os.path.abspath(rp)
+            dir_tree.append(fp)
+            #t = Thread(target=populate_dir, args=(fp))  < this bombs
+            t = Thread(target=populate_dir, args=(fp,))  # this works
+            thread_list.append(t)
+            t.start()
+ 
+        dirs = os.walk(base).next()[1]
+
+        for dir in dirs:
+            newbase = os.path.join(base,dir)
+            create_dir_tree(newbase, depth, width)
+    else:
+        return
+
+base = './test'
+#depth = random.randint(1,3)
+depth = 1
+#width = random.randint(1,4)
+width = 3
+
+print('1. Building a directory tree of random depth & width ...')
+print('base %s  depth %d  width %d' % (base, depth, width))
+
+''' 
+build_dir_tree(base, depth, width)
+we need a way to wait for build_dir_tree() to finish
+before proceeding... if depth & width r large, it
+takes a while for build_dir_tree to be complete
+'''
+p = Thread(target=create_dir_tree, args=(base, depth, width))
+p.start()
+p.join()   # wait for build_dir_tree to finish
+
+print 'Created %d dirs'%(len(dir_tree))
+print 'Created %d files'%(len(thread_list))
+
+for t in thread_list:
+    t.join()
+
+print "All threads completed"
+
+# print dir_tree
+
+''' 
+to see what we ended up with using $ tree
+'''
+
+p = subprocess.Popen(["tree", "./test"], stdout=subprocess.PIPE)
+output, err = p.communicate()
+print "*** dir tree  ***\n", output
+
+
+'''
+now we can walk the dir tree to populate ea dir w a random number
+of files of random size
+dd if=/dev/urandom of=test1.img bs=1M count=10 
+'''
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+python-thread-process-sync.txt
+
+https://doughellmann.com/blog/2007/10/01/multiprocessing/
+---------------------------------------------------------
+Listing 1
+
+#!/usr/bin/env python
+# Simple processing example
+
+import os
+from processing import Process, currentProcess
+
+def f(name):
+    print 'Hello,', name, currentProcess()
+
+if __name__ == '__main__':
+    print 'Parent process:', currentProcess()
+    p = Process(target=f, args=[os.environ.get('USER', 'Unknown user')])
+    p.start()
+    p.join()
+
+
+
+
+
+#!/usr/bin/env python
+# Pass an object through a queue to another process.
+
+from processing import Process, Queue, currentProcess
+
+class Example:
+    def __init__(self, name):
+        self.name = name
+    def __str__(self):
+        return '%s (%s)' % (self.name, currentProcess())
+
+
+def f(q):
+    print 'In child:', q.get()
+
+
+if __name__ == '__main__':
+    q = Queue()
+    p = Process(target=f, args=[q])
+    p.start()
+    o = Example('tester')
+    print 'In parent:', o
+    q.put(o)
+    p.join()
+
+

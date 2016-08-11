@@ -1,0 +1,218 @@
+Create a script that will SSH into a remote host and install the user's SSH public key.
+Assume a target host is Linux.  Solution does not need to cover every edge case, but you
+will need to describe pitfalls with your approach, and how you would address those
+issues.
+
+========
+NOTE: this allows user to login to the remote w/o having to use passwords, it also enables writing
+      automation scripts to be run from machines that have been authorized by having the
+      appropriate RSA Keys installed on them 
+
+TODO FOR A RAINY DAY:
+(not sure if this has to be the private key, public key or both ?)
+	> you want to keep your private key secure ( ex: HSM or at least have them password protected)
+      > i think if the key is password protected, ssh must ask you for passphrase but
+	    if you generated the rsa key pair without a password on the private key, then
+	    there's no prompting but then you have to physically secure the private key and the machines on
+	    which they are installed (ex: machines in a data center)
+
+
+https://kb.iu.edu/d/aews
+Using SSH public-key authentication to connect to a remote system is a robust, more secure alternative to logging in with an account password or passphrase. SSH public-key authentication relies on asymmetric cryptographic algorithms that generate a pair of separate keys (i.e., a key pair), one "private" and the other "public". You keep the private key a secret and store it on the computer you use to connect to the remote system. Conceivably, you can share the public key with anyone without compromising the private key; you store it on the remote system in a .ssh/authorized_keys directory.
+
+To use SSH public-key authentication:
+
+The remote system must have a version of SSH installed. The information in this document assumes the remote system uses OpenSSH, which is generally the case for UITS central systems at Indiana University. If the remote system is using a different version of SSH (e.g., Tectia SSH), the process outlined below may not be correct.
+The computer you use to connect to the remote server must have a version of SSH installed. This document includes instructions for generating a key pair with command-line SSH on a Linux or OS X computer, and with PuTTY on a Windows computer.
+You need to be able to transfer your public key to the remote system. Therefore, you must either be able to log into the remote system with an established account username and password/passphrase, or have an administrator on the remote system add the public key to the ~/.ssh/authorized_keys file in your account.
+
+http://www.howtogeek.com/168147/add-public-ssh-key-to-remote-server-in-a-single-command/
+
+Add Public SSH Key to Remote Server in a Single Command
+If you want to setup SSH keys to allow logging in without a password, you can do so with a single command.
+
+The first thing you’ll need to do is make sure you’ve run the keygen command to generate the keys:
+
+ssh-keygen -t rsa
+Then use this command to push the key to the remote server, modifying it to match your server name.
+- the private key should always be password protected when u generate it
+
+cat ~/.ssh/id_rsa.pub | ssh user@hostname 'cat >> .ssh/authorized_keys'
+                                                |
+                      |                         \__ appends id_rsa.pub to .ssh/authorized keys
+                      \__ pipes output over
+                          network to remote machine &
+1)
+Remote machine:  192.168.1.128
+								2) admin add a user
+									iqdean2@iqdean2-desktop:~$ sudo adduser user123
+Remote user un:	user123            
+	   user pw: user123
+
+3) user generates his ssh keypair using ssh-keygen
+
+Remote user's public key on local machine
+
+iqdean@hpdm4:~$ ssh-keygen -t rsa
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/iqdean/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/iqdean/.ssh/id_rsa.
+Your public key has been saved in /home/iqdean/.ssh/id_rsa.pub.
+The key fingerprint is:
+2c:e0:73:06:53:01:b6:18:bf:17:a1:30:a0:ec:f3:c1 iqdean@hpdm4
+The key's randomart image is:
++--[ RSA 2048]----+
+|..+ o.+.         |
+|o  B + .         |
+|... B .          |
+|. .. = o         |
+| o E+ = S        |
+|  o .= .         |
+|   .             |
+|                 |
+|                 |
++-----------------+
+iqdean@hpdm4:~$ ls -al .ssh
+total 20
+drwx------  2 iqdean iqdean 4096 Jul 14 18:53 .
+drwxr-xr-x 36 iqdean iqdean 4096 Jul 14 09:59 ..
+-rw-------  1 iqdean iqdean 1679 Jul 14 18:53 id_rsa
+-rw-r--r--  1 iqdean iqdean  394 Jul 14 18:53 id_rsa.pub	< generate a public key
+-rw-r--r--  1 iqdean iqdean  886 Jul  5 18:21 known_hosts
+
+iqdean@hpdm4:~$ cat ~/.ssh/id_rsa.pub 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDB66kAoEvokKdY/UkIX8EEdNizkPhAgmBoQxnqEuAPgSi+TyAPtFDn3UetSpdF/IYSj2NXYs30k8cXH5DD6VPbVErhpN+JZpz7Ha3BvsGvqXmfpkzLYR/GCTRaDoc9JYa+mNShXAvW5fFTOrLJIVcY7eIAWfzNhh1KP+IFZOuK1HHbBqIGvb3kEFwUweayhAsaVZGnbYADbVwBJQ5ZbLvYWmfhNbainzFM/C+SxuYwzGbqp34EsYnyI7IrR4PA7G4gnHKDRkvM72uR4eIvZi5IEr+5IrjzTiVVJbLVa0OKgK+gc69ixUkZb4Xgn4DXk9OX4WfIDa4iRW7Cjng8xGgv iqdean@hpdm4
+
+4) script to ssh to remote and install user's ssh-key
+
+cat ~/.ssh/id_rsa.pub | ssh user@hostname 'cat >> .ssh/authorized_keys'
+
+iqdean@hpdm4:~$ cat ~/.ssh/id_rsa.pub | ssh user123@192.168.1.128 'cat > .ssh/authorized_keys'
+user123@192.168.1.128's password: 
+bash: .ssh/authorized_keys: No such file or directory
+
+user123@iqdean2-desktop:~$ mkdir .ssh
+user123@iqdean2-desktop:~$ ls -al
+total 40
+drwxr-xr-x 4 user123 user123 4096 Jul 14 19:20 .
+drwxr-xr-x 7 root    root    4096 Jul 14 19:11 ..
+-rw-r--r-- 1 user123 user123  220 Jul 14 19:11 .bash_logout
+-rw-r--r-- 1 user123 user123 3486 Jul 14 19:11 .bashrc
+drwx------ 2 user123 user123 4096 Jul 14 19:14 .cache
+-rw-r--r-- 1 user123 user123 8445 Jul 14 19:11 examples.desktop
+-rw-r--r-- 1 user123 user123  675 Jul 14 19:11 .profile
+drwxrwxr-x 2 user123 user123 4096 Jul 14 19:20 .ssh
+
+iqdean@hpdm4:~$ cat ~/.ssh/id_rsa.pub | ssh user123@192.168.1.128 'cat > .ssh/authorized_keys'
+user123@192.168.1.128's password: 
+iqdean@hpdm4:~$ 
+
+user123@iqdean2-desktop:~$ ls -al .ssh
+total 12
+drwxrwxr-x 2 user123 user123 4096 Jul 14 19:21 .
+drwxr-xr-x 4 user123 user123 4096 Jul 14 19:20 ..
+-rw-rw-r-- 1 user123 user123  394 Jul 14 19:21 authorized_keys
+
+user123@iqdean2-desktop:~$ cat .ssh/authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDB66kAoEvokKdY/UkIX8EEdNizkPhAgmBoQxnqEuAPgSi+TyAPtFDn3UetSpdF/IYSj2NXYs30k8cXH5DD6VPbVErhpN+JZpz7Ha3BvsGvqXmfpkzLYR/GCTRaDoc9JYa+mNShXAvW5fFTOrLJIVcY7eIAWfzNhh1KP+IFZOuK1HHbBqIGvb3kEFwUweayhAsaVZGnbYADbVwBJQ5ZbLvYWmfhNbainzFM/C+SxuYwzGbqp34EsYnyI7IrR4PA7G4gnHKDRkvM72uR4eIvZi5IEr+5IrjzTiVVJbLVa0OKgK+gc69ixUkZb4Xgn4DXk9OX4WfIDa4iRW7Cjng8xGgv iqdean@hpdm4
+user123@iqdean2-desktop:~$ 
+
+see if the append works   ... KEWL it works! ...
+------------------------
+
+-- on local --
+iqdean@hpdm4:~$ cat ~/.ssh/id_rsa.pub | ssh user123@192.168.1.128 'cat > .ssh/authorized_keys'
+user123@192.168.1.128's password: 
+
+iqdean@hpdm4:~$ 
+
+-- on remote --
+
+-- on local ---
+iqdean@hpdm4:~$ cat ~/.ssh/id_rsa.pub | ssh user123@192.168.1.128 'cat >> .ssh/authorized_keys'
+iqdean@hpdm4:~$ 
+
+NOTICE: the 2nd time ssh didn't prompt for     user123@192.168.1.128's password:
+> this is cuz both user iqdean@hpdm4           on the local machine  has installed his public key
+              &    user user123@192.168.1.128  on the remoe machine  as authorized_keys on the remote
+
+To confirm this is the case, 
+-----------------------------
+
+a) let's delete the authorized keys on the remote and then try to remote to the machine
+b) from remote
+iqdean@hpdm4:~$ ssh user123@192.168.1.128
+user123@192.168.1.128's password: 			< now we get the prompt
+
+c) on remote add the authorized_keys back
+
+user123@iqdean2-desktop:~/.ssh$ nano authorized_keys
+user123@iqdean2-desktop:~/.ssh$ cat authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDB66kAoEvokKdY/UkIX8EEdNizkPhAgmBoQxnqEuAPgSi+TyAPtFDn3UetSpdF/IYSj2NXYs30k8cXH5DD6VPbVErhpN+JZpz7Ha3BvsGvqXmfpkzLYR/GCTRaDoc9JYa+mNShXAvW5fFTOrLJIVcY7eIAWfzNhh1KP+IFZOuK1HHbBqIGvb3kEFwUweayhAsaVZGnbYADbVwBJQ5ZbLvYWmfhNbainzFM/C+SxuYwzGbqp34EsYnyI7IrR4PA7G4gnHKDRkvM72uR4eIvZi5IEr+5IrjzTiVVJbLVa0OKgK+gc69ixUkZb4Xgn4DXk9OX4WfIDa4iRW7Cjng8xGgv iqdean@hpdm4
+
+d) on the local
+iqdean@hpdm4:~$ ssh user123@192.168.1.128							< kewl, logs in without a password
+
+Welcome to Ubuntu 12.04.5 LTS (GNU/Linux 3.13.0-39-generic x86_64)
+
+Last login: Thu Jul 14 19:14:56 2016 from hpdm4.hsd1.ca.comcast.net
+user123@iqdean2-desktop:~$ 
+
+2.1) -- on local --- see if APPEND (cat >> ~/.ssh/authorized_keys) instead of CREATE ( cat >> ~/.ssh/authorized_keys) works
+iqdean@hpdm4:~$ cat ~/.ssh/id_rsa.pub | ssh user123@192.168.1.128 'cat >> .ssh/authorized_keys'
+iqdean@hpdm4:~$ 
+
+2.2) -- on remote ---
+user123@iqdean2-desktop:~/.ssh$ cat authorized_keys 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDB66kAoEvokKdY/UkIX8EEdNizkPhAgmBoQxnqEuAPgSi+TyAPtFDn3UetSpdF/IYSj2NXYs30k8cXH5DD6VPbVErhpN+JZpz7Ha3BvsGvqXmfpkzLYR/GCTRaDoc9JYa+mNShXAvW5fFTOrLJIVcY7eIAWfzNhh1KP+IFZOuK1HHbBqIGvb3kEFwUweayhAsaVZGnbYADbVwBJQ5ZbLvYWmfhNbainzFM/C+SxuYwzGbqp34EsYnyI7IrR4PA7G4gnHKDRkvM72uR4eIvZi5IEr+5IrjzTiVVJbLVa0OKgK+gc69ixUkZb4Xgn4DXk9OX4WfIDa4iRW7Cjng8xGgv iqdean@hpdm4
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDB66kAoEvokKdY/UkIX8EEdNizkPhAgmBoQxnqEuAPgSi+TyAPtFDn3UetSpdF/IYSj2NXYs30k8cXH5DD6VPbVErhpN+JZpz7Ha3BvsGvqXmfpkzLYR/GCTRaDoc9JYa+mNShXAvW5fFTOrLJIVcY7eIAWfzNhh1KP+IFZOuK1HHbBqIGvb3kEFwUweayhAsaVZGnbYADbVwBJQ5ZbLvYWmfhNbainzFM/C+SxuYwzGbqp34EsYnyI7IrR4PA7G4gnHKDRkvM72uR4eIvZi5IEr+5IrjzTiVVJbLVa0OKgK+gc69ixUkZb4Xgn4DXk9OX4WfIDa4iRW7Cjng8xGgv iqdean@hpdm4
+user123@iqdean2-desktop:~/.ssh$ 
+
+
+-------
+python script to ssh to a remote machine and run a command on the remote machine
+
+
+import subprocess
+import sys
+
+HOST="idean@192.168.1.134"
+# Ports are handled in ~/.ssh/config since we use OpenSSH
+COMMAND="uname -a"
+
+ssh = subprocess.Popen(["ssh", "%s" % HOST, COMMAND],
+                       shell=False,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.PIPE)
+result = ssh.stdout.readlines()
+if result == []:
+    error = ssh.stderr.readlines()
+    print >>sys.stderr, "ERROR: %s" % error
+else:
+    print result
+
+
+===================================================
+
+http://askubuntu.com/questions/4830/easiest-way-to-copy-ssh-keys-to-another-machine
+
+http://www.cyberciti.biz/faq/use-ssh-copy-id-with-an-openssh-server-listing-on-a-different-port/
+
+The ssh-copy-id is a shell script that uses ssh command to log into a remote machine using a login password to install your public key in a remote machine’s authorized_keys. The script also secure the remote user’s home, ~/.ssh, and ~/.ssh/autho-rized_keys files by changing the permissions.
+
+The syntax is as follows to install ssh-keys:
+
+ssh-copy-id user@server-name-here
+ssh-copy-id -i /path/to/identity-file user@server-name-here
+
+=======================
+
+You can pipe the local script to the remote server and execute it with one command:
+
+
+ssh -t user@host 'sh' < path_to_script
+
+======
+

@@ -1,0 +1,106 @@
+python-subprocess-101.txt
+
+python subprocess enables you to run shell commands from within a python script
+
+like all things python, it has its 'magic decoder' rings which you have to master
+before you can get anything done:
+
+http://stackoverflow.com/questions/11679936/python-subprocess-arguments
+
+As JBernardo mentioned in a comment, separate the "-bufsize 4096" argument into two, "-bufsize", "4096". Each argument needs to be separated when subprocess.call is used with shell=False (the default). You can also specify shell=True and give the whole command as a single string, but this is not recommended due to potential security vulnerabilities.
+
+You should not need to use string formatting where you have "%s" % url. If url is a string, pass it directly, otherwise call str(url) to get a string representation.
+
+Ex: How to run following command line in a python script:
+-----------------------------------------------------------
+
+from command line
+-----------------
+
+$ time dd if=/dev/urandom of=test1.img bs=512 count=1000
+
+output of cmd line
+--------------------
+
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ time dd if=/dev/urandom of=test1.img bs=512 count=1000
+1000+0 records in
+1000+0 records out
+512000 bytes (512 kB) copied, 0.0801435 s, 6.4 MB/s
+
+real	0m0.083s
+user	0m0.004s
+sys	0m0.052s
+
+$ ls -al test1.*
+
+-rwxrwxrwx 1 root root 512000 Jul 15 11:09 test1.img
+
+
+from python script
+------------------
+
+Example 1:   spews to console
+-----------
+
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ cat rundd.py
+
+#!/usr/bin/python
+
+import subprocess
+
+def os_system_dd():
+   print "executing the time dd command"
+   cmd_list = ['time','dd','if=/dev/urandom', 'of=test1.img', 'bs=512' ,'count=100']
+   a = subprocess.Popen(cmd_list)
+   a.communicate()
+
+if __name__ == '__main__':
+   os_system_dd()
+
+Output of python script:
+---------------------
+iqdean@hpdm4:/media/8C365D65365D5176/u1404/Aspera/aspera-scripting-challenge/4$ ./rundd.py 
+executing the time dd command
+100+0 records in
+100+0 records out
+51200 bytes (51 kB) copied, 0.0165111 s, 3.1 MB/s
+0.00user 0.00system 0:00.01elapsed 44%CPU (0avgtext+0avgdata 2108maxresident)k
+0inputs+0outputs (0major+91minor)pagefaults 0swaps
+
+
+Example 2:  spews to a log file
+----------
+Ref:  http://stackoverflow.com/questions/7581710/python-subprocess-dd-and-stdout
+
+import subprocess
+out_fd = open('test_file','w')
+def os_system_dd():
+   out_fd.write("executing the time dd command\n")
+   cmd_list = ['time','dd','if=/dev/random', 'of=/home/anand/sys_entropy_random',
+                           'bs=1M' ,'count=5']
+   a = subprocess.Popen(cmd_list,stderr=out_fd) # notice stderr
+   a.communicate()
+
+if __name__ == '__main__':
+   os_system_dd()
+
+
+=======
+http://blog.endpoint.com/2015/01/getting-realtime-output-using-python.html
+========
+
+The Problem
+When I launch a long running unix process within a python script, it waits until the process is finished, and only then do I get the complete output of my program. This is annoying if I'm running a process that takes a while to finish. And I want to capture the output and display it in the nice manner with clear formatting.
+
+
+subprocess.popen
+To run a process and read all of its output, set the stdout value to PIPE and call communicate().
+
+import subprocess
+process = subprocess.Popen(['echo', '"Hello stdout"'], stdout=subprocess.PIPE)
+stdout = process.communicate()[0]
+print 'STDOUT:{}'.format(stdout)
+
+The above script will wait for the process to complete and then it will display the output. 
+So now we are going to read the stdout line by line and display it in the console untill it completes the process. 
+

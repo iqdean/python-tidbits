@@ -1,0 +1,322 @@
+ubu12.04 python setup
+2017-07-18
+
+Why: Aspera Scripting Challenge check on u1204 vs u1404
+- u1404 machine is using ntfs volume mapped to u1404 home/user/dir
+  & all the file permissions endup being root.root
+
+u1204
+
+1. setup python
+
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/1$ python 
+Python 2.7.3 (default, Dec 18 2014, 19:10:20) 
+[GCC 4.6.3] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import json              < not working
+
+$ sudo apt-get install python-json        < no package named python-json
+$ sudo apt-get install python-simplejson  < Installs ok
+
+>>> import json			< works now
+
+2. clean up .bashrc to get rid of all the intel proxy shit
+
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/1$ curl time.jsontest.com
+{
+   "time": "06:44:58 PM",
+   "milliseconds_since_epoch": 1468867498582,
+   "date": "07-18-2016"
+}
+
+TEST 1 of 6    OK
+-----------
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/1$ ./1-deltatime.py 
+
+REST API CALL to time.jsontest.com returned: 
+{
+   "time": "06:48:56 PM",
+   "milliseconds_since_epoch": 1468867736277,
+   "date": "07-18-2016"
+}
+
+Remote EPOCH:  1468867736
+Local  EPOCH:  1468867736
+DELTA TIME  :  0 
+
+TEST 2 of 6
+-----------
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/2$ ./2-parselog.py 
+Traceback (most recent call last):
+  File "./2-parselog.py", line 23, in <module>
+    mlog = open('aspera.log')
+IOError: [Errno 2] No such file or directory: 'aspera.log'
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/2$ ls
+2-parselog.py  script_log.tgz  test.log
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/2$ tar -xvzf script_log.tgz 
+aspera.log
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/2$ ./2-parselog.py 
+1 Total number of ascp  transfers : 75
+2 Listing of all transfers and their average rate in Mb/s
+  PID      Mbs
+[[ 1721     0]
+ [ 1723     0]
+ [ 1774     0]
+ [ 1794     0]
+ [ 1831     0]
+ [ 1856     0]
+ [ 1858     0]
+ [ 1879     0]
+ [ 1881     0]
+ [ 1893     0]
+ [ 1894     0]
+ [ 1923     0]
+ [ 1925   743]
+ [ 1956     0]
+ [ 1954   720]
+ [ 2026     0]
+ [ 2028   732]
+ [ 2090  1709]
+ [ 2088   373]
+ [ 4043     0]
+ [ 4042     0]
+ [ 4057     0]
+ [ 4040   550]
+ [ 4086     0]
+ [ 4082     0]
+ [ 4083   563]
+ [ 4105   491]
+ [ 4136     0]
+ [ 4133     0]
+ [ 4135  1350]
+ [ 7230     0]
+ [ 7219  1356]
+ [ 7228   714]
+ [ 8236     0]
+ [ 8270     0]
+ [ 8266     0]
+ [ 8267     0]
+ [ 8227  1019]
+ [ 8314  1095]
+ [ 8313   558]
+ [ 8229   643]
+ [ 8315    22]
+ [12195   865]
+ [12202   682]
+ [12204     0]
+ [12219   796]
+ [12221   664]
+ [12227   121]
+ [12440  1752]
+ [12468  1796]
+ [13891  1759]
+ [13898   647]
+ [13900    27]
+ [13956  1768]
+ [13958   502]
+ [13964    31]
+ [14082  1778]
+ [14083   669]
+ [14086    21]
+ [14181  1774]
+ [14180   666]
+ [14184    15]
+ [21067  1778]
+ [21074   668]
+ [21076   169]
+ [21108  1805]
+ [21110   683]
+ [21146  1786]
+ [21117    20]
+ [21558     0]
+ [21568     0]
+ [21560     0]
+ [22385     0]
+ [22387     0]
+ [22389     0]]
+3 PID of transfer(s) with the longest duration 
+      PID    Total uS
+[[     14184 5428185458]
+ [     21117 4142108462]
+ [     14086 4085041409]
+ [      8315 3815124566]
+ [     13900 3138881529]
+ [     13964 2703729902]
+ [      2088 2135156044]
+ [      8229 1335412885]
+ [      7228 1201920437]
+ [      8227  842255419]]
+4 PID of the transfer(s) sending the most data
+         PID   Bytes Xfrd
+[[        8229 107374182400]
+ [        7228 107374182400]
+ [        8227 107374182400]
+ [        4135 107374182400]
+ [        7219 107374182400]
+ [        2090 107374182400]
+ [        2088  99672342528]
+ [        4040  17239117728]
+ [        2028  14468138916]
+ [       14184  10737418240]]
+5 PID of the transfer(s) with the fastest rate
+  PID      Mbs
+[[21108  1805]
+ [12468  1796]
+ [21146  1786]
+ [21067  1778]
+ [14082  1778]
+ [14181  1774]
+ [13956  1768]
+ [13891  1759]
+ [12440  1752]
+ [ 2090  1709]]
+
+TEST 3 of 6:
+------------
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/3$ ./3-cpwocp.sh src.img test.img
+copying src.img test.img
+Copy complete
+
+TEST 4 of 6:
+------------
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/4$ rm -rf test
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/4$ ./4-gentestdata.py 
+
+Building a directory tree of random depth and width
+& populating ea dir with a random number of files 
+  that are of random size (1MBmin < size < 3MB) 
+--------------------------------------------------
+
+base dir ./test  depth 0  width 2
+Total # of Dirs in the tree will be :  2.0
+Created 2 dirs
+Created 2 files
+Waiting on file creation threads to finish ... 
+All threads completed
+*** dir tree  ***
+./test
+├── D0_L0
+│   └── test1.img
+└── D1_L0
+    └── test1.img
+
+2 directories, 2 files
+
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/4$ rm -rf test
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/4$ ./4-gentestdata.py 
+
+Building a directory tree of random depth and width
+& populating ea dir with a random number of files 
+  that are of random size (1MBmin < size < 3MB) 
+--------------------------------------------------
+
+base dir ./test  depth 2  width 3
+Total # of Dirs in the tree will be :  39.0
+Created 39 dirs
+Created 39 files
+Waiting on file creation threads to finish ... 
+All threads completed
+*** dir tree  ***
+./test
+├── D0_L2
+│   ├── D0_L1
+│   │   ├── D0_L0
+│   │   │   └── test1.img
+│   │   ├── D1_L0
+│   │   │   └── test1.img
+│   │   ├── D2_L0
+│   │   │   └── test1.img
+│   │   └── test1.img
+│   ├── D1_L1
+│   │   ├── D0_L0
+│   │   │   └── test1.img
+│   │   ├── D1_L0
+│   │   │   └── test1.img
+│   │   ├── D2_L0
+│   │   │   └── test1.img
+│   │   └── test1.img
+│   ├── D2_L1
+│   │   ├── D0_L0
+│   │   │   └── test1.img
+│   │   ├── D1_L0
+│   │   │   └── test1.img
+│   │   ├── D2_L0
+│   │   │   └── test1.img
+│   │   └── test1.img
+│   └── test1.img
+├── D1_L2
+│   ├── D0_L1
+│   │   ├── D0_L0
+│   │   │   └── test1.img
+│   │   ├── D1_L0
+│   │   │   └── test1.img
+│   │   ├── D2_L0
+│   │   │   └── test1.img
+│   │   └── test1.img
+│   ├── D1_L1
+│   │   ├── D0_L0
+│   │   │   └── test1.img
+│   │   ├── D1_L0
+│   │   │   └── test1.img
+│   │   ├── D2_L0
+│   │   │   └── test1.img
+│   │   └── test1.img
+│   ├── D2_L1
+│   │   ├── D0_L0
+│   │   │   └── test1.img
+│   │   ├── D1_L0
+│   │   │   └── test1.img
+│   │   ├── D2_L0
+│   │   │   └── test1.img
+│   │   └── test1.img
+│   └── test1.img
+└── D2_L2
+    ├── D0_L1
+    │   ├── D0_L0
+    │   │   └── test1.img
+    │   ├── D1_L0
+    │   │   └── test1.img
+    │   ├── D2_L0
+    │   │   └── test1.img
+    │   └── test1.img
+    ├── D1_L1
+    │   ├── D0_L0
+    │   │   └── test1.img
+    │   ├── D1_L0
+    │   │   └── test1.img
+    │   ├── D2_L0
+    │   │   └── test1.img
+    │   └── test1.img
+    ├── D2_L1
+    │   ├── D0_L0
+    │   │   └── test1.img
+    │   ├── D1_L0
+    │   │   └── test1.img
+    │   ├── D2_L0
+    │   │   └── test1.img
+    │   └── test1.img
+    └── test1.img
+
+39 directories, 39 files
+
+TEST 5/6
+--------
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/5$ cat send_sshkey.sh
+#!/bin/bash
+
+HOST="user123@192.168.1.128"
+echo "Installing ./id_rsa.pub to $HOST/.ssh/authorized_keys..."
+cat id_rsa.pub | ssh $HOST 'cat >> .ssh/authorized_keys'
+echo "Done"
+
+TEST 6/6
+--------
+iqdean2@iqdean2-desktop:~/2016/Aspera/aspera-scripting-challenge/6$ cat diskmon.sh
+#!/bin/bash
+DISK="/media/iqdean/Lexar"
+res=`df $DISK | grep / | awk '{ print $5}' | sed 's/%//g'`
+ts=$(eval "date +%Y%m%d%H%M%S")
+echo "Time: $ts Volume: $DISK  Used: $res% " >> diskmon.log
+
+
+

@@ -1,0 +1,90 @@
+http://pythoncentral.io/python-generators-and-yield-keyword/
+
+At a glance, the yield statement is used to define generators, replacing the return of a function to provide a result to its caller without destroying local variables. Unlike a function, where on each call it starts with new set of variables, a generator will resume the execution where it was left off.
+..
+Even simple tasks can be more efficient using the idea of generators. In Python 2.X, a common range() function in Python is often substituted by xrange(), which yields values instead of creating the whole list at once:
+...
+More generator details and examples
+
+As you may noticed, the first time the function runs, it will go from the beginning until it reaches the yield keyword/statement, returning the first result to the caller. Then, each other call will resume the generator code where is was left of. If the generator function does not hit the yield keyword/statement anymore, it will raise a StopIteration exception (just like all iterable objects do when they are exhausted/finished).
+
+To run the yield on subsequent calls, the generator can contain a loop or multiple yield statements:
+
+def hold_client(name):
+    yield 'Hello, %s! You will be connected soon' % name
+    yield 'Dear %s, could you please wait a bit.' % name
+    yield 'Sorry %s, we will play a nice music for you!' % name
+    yield '%s, your call is extremely important to us!' % name
+I
+t usually makes more sense to use a generator as a conveyor, chaining functions to work on some sequence efficiently. A good example is buffering: fetching data in large chunks and processing in small chunks:
+
+def buffered_read():
+    while True:
+        buffer = fetch_big_chunk()
+        for small_chunk in buffer:
+            yield small_chunk
+This approach allows the processing function to abstract away from any buffering issues. It can just get the values one by one using the generator that will take care of buffering.
+
+And finally, a "classical" example of generators: calculate the first N given number of Fibonacci numbers:
+
+def fibonacci(n):
+    curr = 1
+    prev = 0
+    counter = 0
+    while counter < n:
+        yield curr
+        prev, curr = curr, prev + curr
+        counter += 1
+
+Numbers are calculated until the counter reaches 'n'. This example is so popular because the Fibonacci sequence is infinite, making it problematic to fit in memory.
+
+             ============================
+=============    generators &             ==============
+                 os.walk(base).next()[1] 
+	     ============================
+
+http://stackoverflow.com/questions/10989005/do-i-understand-os-walk-right
+
+os.walk returns a generator, that creates a tuple of values 
+(current_path, directories in current_path, files in current_path), every time the 
+generator is applied it will follow each directory recursively and until no further 
+sub-directories have being explored from the initial directory that walk was called upon.
+
+as such
+
+os.walk('C:\dir1\dir2\startdir').next()[0] # returns 'C:\dir1\dir2\startdir' 
+os.walk('C:\dir1\dir2\startdir').next()[1] # returns all the dirs in 'C:\dir1\dir2\startdir' 
+os.walk('C:\dir1\dir2\startdir').next()[2] # returns all the files in 'C:\dir1\dir2\startdir'
+
+import os.path
+....
+for path, directories, files in os.walk('C:\dir1\dir2\startdir'):
+     if file in files:
+          print 'found %s' % os.path.join(path, file)
+
+or this
+
+
+def search_file(directory = None, file = None):
+    assert os.path.isdir(directory)
+    for cur_path, directories, files in os.walk(directory):
+        if file in files:
+            return os.path.join(directory, cur_path, file)
+    return None
+
+or if you want to look for file you can do this:
+
+import os
+def search_file(directory = None, file = None):
+    assert os.path.isdir(directory)
+    current_path, directories, files = os.walk(directory).next()
+    if file in files:
+        return os.path.join(directory, file)
+    elif directories == '':
+        return None
+    else:
+        for new_directory in directories:
+            result = search_file(directory = os.path.join(directory, new_directory), file = file)
+            if result:
+                return result
+        return None

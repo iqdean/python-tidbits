@@ -1,0 +1,235 @@
+Devise a method for creating temporary file data for use in testing file transfer.  The result
+of the script should be a directory that may have one or more nested directories (quantity
+randomly determined).  Inside these directories are a random number of files in each
+directory.  The files should be large (greater than 1MB) and mimic a collection of data.
+
+Applicant is encouraged to determine the make­up of the collection, but here are a couple
+examples:
+* a collection of frame images in sequential order
+* an archive of video files organized by title.
+
+Please note rationale in the collection chosen, and how the files were generated.  What
+optimizations or considerations need to be made.
+
+Google knows all!
+---------------
+1) http://askubuntu.com/questions/506910/creating-a-large-size-file-in-less-time
+
+You can use dd to create a file consisting solely of zeros. Example:
+
+dd if=/dev/zero of=zeros.img count=1 bs=1 seek=$((10 * 1024 * 1024 * 1024 - 1))
+This is very fast because only one byte is really written to the physical disc. However, some file systems do not support this.
+
+If you want to create a file containing pseudo-random contents, run:
+
+dd if=/dev/urandom of=random.img count=1024 bs=10M
+I suggest that you use 10M as buffer size (bs). This is because 10M is not too large, but it still gives you a good buffer size. It should be pretty fast, but it always depends on your disk speed and processing power.
+
+=====
+
+2) stackoverflow.com/questions/139261/how-to-create-a-file-with-a-given-size-in-linux#comment23825965_139289
+
+
+You can do it programmatically:
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdlib.h>
+
+int main() {
+    int fd = creat("/tmp/foo.txt", 0644);
+    ftruncate(fd, SIZE_IN_BYTES);
+    close(fd);
+    return 0;
+}
+This approach is especially useful to subsequently mmap the file into memory.
+
+use the following command to check that the file has the correct size:
+
+# du -B1 --apparent-size /tmp/foo.txt
+
+
+3) === man dd ===
+
+ dd if=/dev/urandom of=random.img count=1024 bs=10M
+
+bs=BYTES     read and write up to BYTES bytes at a time
+
+count=N      copy only N input blocks
+
+http://www.2uo.de/myths-about-urandom/
+
+
+4) === binary, bits, megabits etc ===
+
+2^20 = 1048576 = 1MB
+                10MB = 10 * 1048576 = 10485760 
+
+
+Using dd, this should create a 10MB file filled with random data:
+
+dd if=/dev/urandom of=test1.img bs=1M count=10
+
+AND FINALLY
+
+5) run it a see what it does:
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/mynotes/3
+$ dd if=/dev/urandom of=test1.img bs=1M count=10
+10+0 records in
+10+0 records out
+10485760 bytes (10 MB) copied, 1.15872 s, 9.0 MB/s
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/mynotes/3$ ls -al
+total 10240
+drwxrwxrwx 1 root root      152 Jul 12 20:51 .
+drwxrwxrwx 1 root root      224 Jul 12 20:17 ..
+-rwxrwxrwx 1 root root 10485760 Jul 12 20:51 test1.img
+
+==== create random number between x & y ===
+Create an integer random between e.g. 1-11 and multiply it by 5. Simple math.
+
+import random
+for x in range(20):
+  print random.randint(1,11)*5,
+print
+
+=== Python directory tree generator, using recursion
+https://gist.github.com/samuelsh/b837f8ab8b33c344f01128568dd12019
+
+#!/usr/bin/python2.6
+
+import sys
+import os
+
+def build_dir_tree(base, depth, width):
+    print("Call #%d" % depth)
+    if depth >= 0:
+        curr_depth = depth
+        depth -= 1
+        for i in xrange(width):
+                # first creating all folder at current depth
+                os.makedirs('%s/Dir_#%d_level_%d' % (base, i, curr_depth))
+        dirs = os.walk(base).next()[1]
+        for dir in dirs:
+                newbase = os.path.join(base,dir)
+                build_dir_tree(newbase, depth, width)
+    else:
+        return
+
+if not sys.argv[1:]:
+        print('No base path given')
+        sys.exit(1)
+
+print('path: %s, depth: %d, width: %d' % (sys.argv[1], int(sys.argv[2]), int(sys.argv[3])))
+build_dir_tree(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
+
+
+$ ./4-gen-file-xfr-test-data.py ./test 1 2
+path: ./test, depth: 1, width: 2
+Call #1
+Call #0
+Call #-1
+Call #-1
+Call #0
+Call #-1
+Call #-1
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/4$ tree
+.
+├── 4-gen-file-xfr-test-data.py ./test 1 2
+								   |   | \__ width
+                                   |   \____ depth
+								    \_______ base  
+
+								< starts in the current dir
+└── test						< base
+    ├── Dir_#0_level_1
+    │   ├── Dir_#0_level_0
+    │   └── Dir_#1_level_0
+    └── Dir_#1_level_1
+        ├── Dir_#0_level_0
+        └── Dir_#1_level_0
+
+7 directories, 4 files
+
+=======
+http://stackoverflow.com/questions/31692877/using-os-walk-in-python-to-create-a-txt-file-for-a-corresponding-folder-and-subf
+========
+https://www.safaribooksonline.com/library/view/programming-python-4th
+========
+http://pythoncentral.io/how-to-traverse-a-directory-tree-in-python-guide-to-os-walk/
+========
+http://www.saltycrane.com/blog/2007/03/python-oswalk-example/
+
+import os
+
+path = "c:\\python25"
+
+'''i = 0'''
+for (path, dirs, files) in os.walk(path):
+    print path
+    print dirs
+    print files
+    print "----"
+'''
+    i += 1
+    if i >= 4:
+        break
+'''
+====
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/4$ ./4-gen-file-xfr-test-data.py ./test 1 2
+path: ./test, depth: 1, width: 2
+Call #1
+Call #0
+Call #-1
+Call #-1
+Call #0
+Call #-1
+Call #-1
+./test
+['Dir_#0_level_1', 'Dir_#1_level_1']
+[]
+----
+./test/Dir_#0_level_1
+['Dir_#0_level_0', 'Dir_#1_level_0']
+[]
+----
+./test/Dir_#0_level_1/Dir_#0_level_0
+[]
+[]
+----
+./test/Dir_#0_level_1/Dir_#1_level_0
+[]
+[]
+----
+./test/Dir_#1_level_1
+['Dir_#0_level_0', 'Dir_#1_level_0']
+[]
+----
+./test/Dir_#1_level_1/Dir_#0_level_0
+[]
+[]
+----
+./test/Dir_#1_level_1/Dir_#1_level_0
+[]
+[]
+----
+
+iqdean@hpdm4:~/u1404/Aspera/aspera-scripting-challenge/4$ tree
+.
+└── test
+    ├── Dir_#0_level_1
+    │   ├── Dir_#0_level_0
+    │   └── Dir_#1_level_0
+    └── Dir_#1_level_1
+        ├── Dir_#0_level_0
+        └── Dir_#1_level_0
+
+7 directories, 4 files
+
+====
+http://stackoverflow.com/questions/12654772/create-empty-file-using-python
+ I've been using os.system(y) where y = 'touch %s' % (x)
+

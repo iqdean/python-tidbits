@@ -1,0 +1,48 @@
+Previous works of note:
+
+python scripts
+--------------
+
+http://192.168.1.134/gitlist/Intel-Edison/tree/master/software/ed-rtkern-eval/rt-tests/benchmark-results/rtos-idle/
+
+INPUTS: 	txt file w histogram data output from cyclictest
+xxxx1 yyyy1
+xxxx2 yyyy2
+etc   etc
+xxxxN yyyyN
+
+OUTPUTS:	histogram plot using matplotlib
+
+bash scripts
+------------
+http://192.168.1.134/gitlist/galileo-iotdevkit/tree/master/bash101/
+
+/media/iqdean/Lexar/ROBOPROJ/2014/SWDEV/Intel-Galileo-Board/Software/galileo-iotdevkit/bash101:
+  -rwx------ 1 iqdean iqdean   1752 Apr 16  2015 2dmatrix.sh
+
+  -rwx------ 1 iqdean iqdean 274564 Apr 29  2015 A Brief Introduction to Regular Expressions.pdf
+
+  -rwx------ 1 iqdean iqdean    779 Apr 16  2015 ckcmdout.sh    < how to test for cmd line args
+  -rwx------ 1 iqdean iqdean    463 Apr 16  2015 matrix.sh	< matrix multiply in bash
+
+  -rwx------ 1 iqdean iqdean   3640 Apr 29  2015 new1.sh
+
+  -rwx------ 1 iqdean iqdean  14169 Apr 16  2015 procstat
+  -rwx------ 1 iqdean iqdean   6088 Apr 16  2015 procstat.c
+
+  -rwx------ 1 iqdean iqdean   2779 Apr 16  2015 ps2array.sh	< capture output of ps into a Matrix ROWS
+  -rwx------ 1 iqdean iqdean   4979 Apr 16  2015 ps3chrt.sh	  set IFS to space & split ea line on space
+  -rwx------ 1 iqdean iqdean   3872 Apr 16  2015 ps4chrt.sh       how many rows? how many columns?
+
+  -rwx------ 1 iqdean iqdean   2655 Apr 29  2015 regex101.sh	< how to use sed to s&r in bash scripts
+
+  -rwx------ 1 iqdean iqdean  12862 Apr 29  2015 rtssup.sh
+
+  -rwx------ 1 iqdean iqdean   2255 Apr 16  2015 startrtss.sh
+  -rwx------ 1 iqdean iqdean   2064 Apr 16  2015 test1.sh
+
+  -rwx------ 1 iqdean iqdean    571 Apr 16  2015 test.sh
+
+
+
+

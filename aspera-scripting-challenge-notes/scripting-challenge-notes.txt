@@ -1,0 +1,41 @@
+Script submission will consist of a tar/tgz/zip
+file containing a script file for each question and an optional README if necessary.
+
+
+http://www.linuxquestions.org/questions/linux-server-73/which-is-better-cp-or-rsync-for-local-syncing-coping-847854/
+
+
+
+As you can see below - 'rsync' is faster by more than 10%, and has a handy indicator -- where 'cp' does not.
+
+Speed test:
+Code:
+"time rsync -varh --progress (15G folder/29650 files) (some destination on same drive)"
+
+OUTPUT
+total size is 15.02G
+real	4m28.815s
+user	0m59.163s
+sys	0m27.270s
+
+
+"time cp -a (15G folder/29650 files) (some destination on same drive)"
+
+OUTPUT
+real	6m12.800s
+user	0m1.418s
+sys	0m21.759s
+
+
+Progress indicator test:
+Code:
+"rsync -varh --progress (something) (somewhere)"
+
+Output
+/dir/dir/dir/file.txt 24.69M 100%   74.51MB/s    0:00:00 (xfer#28470, to-check=340/29650)[/QUOTE]
+
+
+"cp -a (something) (somewhere)"
+
+Output:
+# > <intentionally blank>

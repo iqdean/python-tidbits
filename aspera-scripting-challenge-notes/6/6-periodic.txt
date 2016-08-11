@@ -1,0 +1,83 @@
+
+
+Write a script that periodically executes.  This script will check disk space utilization of a
+defined volume/directory that is passed to it.  It will write to a configured file a log entry
+that indicates the expected date the storage will fill up based on the growth pattern of the
+storage.
+
+http://code.activestate.com/recipes/496800-event-scheduling-threadingtimer/
+
+http://code.activestate.com/recipes/114644/?_ga=1.225705822.557983689.1468375584
+
+https://docs.python.org/2.7/library/sched.html
+
+
+#!/bin/bash
+CURRENT=$(df / | grep / | awk '{ print $5}' | sed 's/%//g')
+THRESHOLD=90
+
+if [ "$CURRENT" -gt "$THRESHOLD" ] ; then
+    mail -s 'Disk Space Alert' mailid@domainname.com << EOF
+Your root partition remaining free space is critically low. Used: $CURRENT%
+EOF
+fi
+
+--------------------------------------------------------------
+
+#!/bin/bash
+CURRENT=$(df / | grep / | awk '{ print $5}' | sed 's/%//g')
+echo "Used: $CURRENT"
+
+-------------------------------------------------------------
+
+iqdean@hpdm4:~$ df
+Filesystem     1K-blocks      Used Available Use% Mounted on
+udev             3017624         4   3017620   1% /dev
+tmpfs             605736      1248    604488   1% /run
+/dev/sda3       14172856   6330636   7115612  48% /
+none                   4         0         4   0% /sys/fs/cgroup
+none                5120         0      5120   0% /run/lock
+none             3028672      9860   3018812   1% /run/shm
+none              102400        32    102368   1% /run/user
+/dev/sda2      610287612 174860888 435426724  29% /media/8C365D65365D5176
+/dev/sdb1       62519168  28894336  33624832  47% /media/iqdean/Lexar
+iqdean@hpdm4:~$ df / | grep / | awk '{ print $5}' | sed 's/%//g'
+48
+iqdean@hpdm4:~$ df /media/iqdean/Lexar | grep / | awk '{ print $5}' | sed 's/%//g'
+47
+
+----------------------------------------------------------
+
+If you want to run a command periodically, there's 2 ways :
+
+using the crontab command ex. * * * * * command (run every minutes)
+using a loop like : while true; do ./my_script.sh; sleep 60; done (not precise)
+
+-----------------------------------------------------------
+
+https://en.wikipedia.org/wiki/Cron
+
+Entry		Description														Equivalent to
+@yearly 	(or @annually)	Run once a year at midnight of January 1		0 0 1 1 *
+@monthly	Run once a month at midnight of the first day of the month		0 0 1 * *
+@weekly		Run once a week at midnight on Sunday morning					0 0 * * 0
+@daily		Run once a day at midnight										0 0 * * *
+@hourly		Run once an hour at the beginning of the hour					0 * * * *
+@reboot		Run at startup	@reboot
+
+Cron is driven by a crontab (cron table) file, a configuration file that specifies shell commands to run periodically on a given schedule. 
+
+The crontab files are stored where the lists of jobs and other instructions to the cron daemon are kept. 
+
+Users can have their own individual crontab files and often there is a system wide crontab file (usually in /etc or a subdirectory of /etc) that only system administrators can edit.
+
+---- ubuntu cron ----
+
+https://help.ubuntu.com/community/CronHowto
+
+Starting to Use Cron
+To use cron for tasks meant to run only for your user profile, add entries to your own user's crontab file. To edit the crontab file enter:
+
+crontab -e
+
+
